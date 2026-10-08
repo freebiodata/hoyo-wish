@@ -1,0 +1,112 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site';
+
+const title = 'Primogem Planner – Will Your Currency Cover the Banner?';
+const description =
+  'Free primogem/jade/polychrome planner: enter your currency, daily income and days left on the banner to see pulls you\'ll have, the deficit, and a straight yes/no verdict.';
+
+const faqs = [
+  {
+    q: 'What income should I enter for dailies?',
+    a: 'Your true seven-day average from commissions/dailies plus events — check a recent week in your log rather than hoping. Patch events are lumpy: if a big event ends before the banner, it can\'t pay for it.',
+  },
+  {
+    q: 'Does this count battle pass or Welkin/Monthly Pass?',
+    a: 'Add them manually as part of daily income if you hold them. The planner deliberately takes one number — your realistic currency per day — so it works identically for every game and spending tier.',
+  },
+  {
+    q: 'Why measure in pulls and not raw currency?',
+    a: 'Pulls are what pity counts. The planner converts at the standard 160-per-pull rate [VERIFY per game] so the deficit speaks the same language as the <a href="/pity-calculator/">pity calculator</a>.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools', href: '/tools/' }, { name: 'Primogem Planner' }]} schema={[faqLd]}>
+  <div class="page-head">
+    <h1>Primogem Planner</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Income math for wish budgets: currency held, realistic daily income, days left — and a straight verdict on
+      whether the banner is affordable.
+    </p>
+    <div class="microline"><span>Free</span><span>No sign-up</span><span>Runs in your browser</span></div>
+  </div>
+
+  <form class="tool panel accent" id="plan" autocomplete="off" onsubmit="return false">
+    <div class="fields">
+      <label class="field"><span>Currency held</span><input id="cur" type="number" value="9600" min="0" step="160" inputmode="numeric" /><small>Primogems / jade / polychromes</small></label>
+      <label class="field"><span>Income per day</span><input id="inc" type="number" value="450" min="0" step="10" inputmode="numeric" /><small>Your 7-day average</small></label>
+      <label class="field"><span>Days left on banner</span><input id="days" type="number" value="14" min="0" step="1" inputmode="numeric" /></label>
+      <label class="field"><span>One-time windfalls</span><input id="bonus" type="number" value="600" min="0" step="60" inputmode="numeric" /><small>Events/maintenance before banner ends</small></label>
+    </div>
+    <button class="btn" type="button" onclick="calcPlan()">Plan</button>
+  </form>
+
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <pre class="formula">total currency = held + days × income + windfalls
+pulls          = total currency ÷ 160 [VERIFY per game]
+deficit        = pulls needed − pulls available</pre>
+    <p>"Pulls needed" comes from the <a href="/pity-calculator/">pity calculator</a>: expected pulls for your scenario, or hard-pity × remaining 50/50s for a guarantee. The planner is linear on purpose — bad weeks happen, so plan with your average, not your best.</p>
+
+    <h2>FAQ</h2>
+    {faqs.map((f) => (
+      <details><summary>{f.q}</summary><p>{f.a}</p></details>
+    ))}
+  </section>
+
+  <section class="prose">
+    <h2>Related tools and guides</h2>
+    <div class="cards">
+      <a class="card" href="/pity-calculator/"><span class="ico">🌟</span><h3>Pity Calculator</h3><p>Get "pulls needed" for your exact scenario.</p><span class="tag">Flagship</span></a>
+      <a class="card" href="/guides/primogem-income/"><span class="ico">📙</span><h3>Primogem income guide</h3><p>Budgeting across banners without false hope.</p><span class="tag">Guide</span></a>
+      <a class="card" href="/wish-tracker/"><span class="ico">📓</span><h3>Wish Tracker</h3><p>Keep the pity side of the ledger honest.</p><span class="tag">Tracker</span></a>
+    </div>
+  </section>
+
+  <div class="trust">
+    <strong>Maintained by {SITE.brand}</strong> · Free, no-ads, no-account · Conversion: <a href="/methodology/">Methodology</a> ·
+    Found an error? <a href="/contact/">Report it</a>.
+  </div>
+</Base>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+  const numv = (id: string) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : 0; };
+  const fmt = (n: number) => (Number.isFinite(n) ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Math.round(n)) : '—');
+
+  function calcPlan() {
+    const cur = numv('cur'), inc = numv('inc'), days = Math.max(0, numv('days')), bonus = numv('bonus');
+    const total = cur + days * inc + bonus;
+    const pulls = Math.floor(total / 160);
+    const el = document.getElementById('result')!;
+    el.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span class="k">Total currency by banner end</span><span class="v">${fmt(total)}</span></div>
+        <div class="stat"><span class="k">Pulls available</span><span class="v cyan">${fmt(pulls)}</span></div>
+        <div class="stat"><span class="k">Income share</span><span class="v gold">${total > 0 ? fmt(((days * inc + bonus) / total) * 100) + '%' : '—'}</span></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Per pull</span><b>160 currency [VERIFY per game]</b></div>
+        <div class="row"><span>Guarantees this covers (90 pity)</span><b>${fmt(pulls / 90, 1)}</b></div>
+        <div class="row"><span>Daily income needed for N pulls</span><b>N × 160 ÷ days</b></div>
+      </div>
+      <div class="verdict ${pulls >= 90 ? 'ok' : 'bad'}">${pulls >= 90
+        ? `✅ ${fmt(pulls)} pulls covers at least one full pity cycle (${fmt(pulls / 90, 1)}×).`
+        : `❌ ${fmt(pulls)} pulls is short of one pity cycle (90) — raise income or extend the timeline.`}</div>
+      <p class="note">Pair with the <a href="/pity-calculator/">pity calculator</a>: it converts your scenario into "pulls needed". <a href="/methodology/">Methodology</a>.</p>`;
+    (window as any).calcPlan = calcPlan;
+  }
+  (window as any).calcPlan = calcPlan;
+  document.getElementById('plan')?.addEventListener('input', calcPlan);
+  calcPlan();
+</script>

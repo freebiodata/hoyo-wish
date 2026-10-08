@@ -1,0 +1,63 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../data/site';
+
+const title = 'Primogem Income Guide – Budget Wishes Across Banners';
+const description =
+  'How to budget primogems (and jade and polychromes) across HoYo banners: realistic income tracking, the two-guarantee rule, and avoiding banner hype with math.';
+const updated = SITE.lastVerified;
+---
+
+<Base
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Guides' }, { name: 'Primogem Income' }]}
+  schema={[{
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'Primogem income guide for HoYo games',
+    datePublished: '2026-10-08',
+    dateModified: updated,
+    author: { '@type': 'Organization', name: SITE.brand },
+  }]}
+>
+  <div class="page-head">
+    <h1>Primogem income guide</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Banner hype is a marketing system; your income is a number. Track the number, apply two rules, and the
+      FOMO stops working on you.
+    </p>
+    <div class="microline"><span>By {SITE.brand}</span><span>Updated {updated}</span></div>
+  </div>
+
+  <section class="prose">
+    <h2>Quick answer</h2>
+    <p>
+      Know your daily income, convert everything to pulls, and never start a banner without the deficit math:
+      pulls needed (from the <a href="/pity-calculator/">pity calculator</a>) versus pulls affordable (from the{' '}
+      <a href="/primogem-planner/">planner</a>). If the gap can't close in time, the decision is already made — skip and bank the guarantee.
+    </p>
+
+    <h2>Track income honestly</h2>
+    <ul>
+      <li>Log your currency after each patch cycle once — most players overestimate income by ~30% from memory.</li>
+      <li>Count event income only when its dates fall <em>before</em> the banner deadline; future events are hopes, not income.</li>
+      <li>Welkin/monthly passes and battle passes are real income — add their daily share if you already own them [NEEDS DATA: exact per-day values per game].</li>
+    </ul>
+
+    <h2>The two rules that do the work</h2>
+    <ol class="steps">
+      <li><strong>The two-guarantee rule:</strong> a guarantee costs up to 180 pulls. If you can't hold that when the banner starts, you're not pulling the agent — you're pulling a coin flip and calling it a plan.</li>
+      <li><strong>The skip-and-bank rule:</strong> a skipped banner converts its entire budget into a guarantee for the next one. Guarantees are the only thing in gacha that compounds.</li>
+    </ol>
+
+    <h2>Where income actually comes from</h2>
+    <ul>
+      <li>Dailies/commissions — small, boring, compounding. The floor of every budget.</li>
+      <li>Events and patch content — lumpy and deadline-bound; the biggest swing factor.</li>
+      <li>Spiral Abyss / memory-style endgame — skill-gated income: improving at the game literally pays.</li>
+      <li>One-time new-content drops — huge for new/returning accounts, then gone. Don't build a lifestyle on them.</li>
+    </ul>
+  </section>
+</Base>

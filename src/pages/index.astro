@@ -1,0 +1,91 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE, TOOLS, GUIDES } from '../data/site';
+
+const title = 'HOYO WISH – Pity Calculator & Wish Tracker for Genshin, HSR, ZZZ';
+const description =
+  'Free HoYo wish tools: pity calculator with soft-pity odds, a browser-only wish tracker for Genshin, Star Rail and ZZZ, primogem planner and personal 50/50 stats.';
+
+const websiteLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITE.brand,
+  url: Astro.site?.toString(),
+  description,
+};
+const orgLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITE.brand,
+  url: Astro.site?.toString(),
+  description: 'Unofficial fan-made wish math for HoYo games.',
+};
+---
+
+<Base title={title} description={description} schema={[websiteLd, orgLd]}>
+  <section class="hero">
+    <p class="kicker">{SITE.kicker} {SITE.lastVerified}</p>
+    <h1>Know your pity. Budget your wishes. Blame the 50/50 with data.</h1>
+    <p class="sub">
+      One toolkit for Genshin Impact, Honkai: Star Rail and Zenless Zone Zero: exact pity odds, a tracker that
+      lives only in your browser, and income planning that survives banner hype.
+    </p>
+    <div class="wishband">
+      No logins, no UID uploads, no cloud — the tracker is yours alone. The pity model and every assumption are
+      public on the <a href="/methodology/">methodology page</a>.
+    </div>
+  </section>
+
+  <section aria-labelledby="tools-h">
+    <h2 id="tools-h">The toolkit</h2>
+    <div class="cards">
+      {TOOLS.map((t) => (
+        <a class="card" href={t.href}>
+          <span class="ico">{t.ico}</span>
+          <h3>{t.name}</h3>
+          <p>{t.desc}</p>
+          <span class="tag">{t.tag}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="chooser-h">
+    <h2 id="chooser-h">Which tool do I need?</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th scope="col">Your question</th><th scope="col">Use</th></tr></thead>
+        <tbody>
+          <tr><td>"Can I get them before the banner ends?"</td><td><a href="/pity-calculator/">Pity Calculator</a> + <a href="/primogem-planner/">Primogem Planner</a></td></tr>
+          <tr><td>"What pity am I on again?"</td><td><a href="/wish-tracker/">Wish Tracker</a></td></tr>
+          <tr><td>"Am I unlucky, or does it just feel that way?"</td><td><a href="/fifty-fifty-stats/">50/50 Stats</a></td></tr>
+          <tr><td>"How does soft pity actually work?"</td><td><a href="/guides/how-pity-works/">How pity works</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="prose" aria-labelledby="why-h">
+    <h2 id="why-h">Why HOYO WISH</h2>
+    <ul>
+      <li><strong>Privacy by architecture.</strong> There is no account and no server: your wish history physically cannot leak, because it never leaves your browser.</li>
+      <li><strong>One model, three games.</strong> Genshin, Star Rail and ZZZ presets share the same engine — parameters adjustable when patches change behavior.</li>
+      <li><strong>No ads, no paywall, no FOMO mechanics.</strong> The tools are the product.</li>
+      <li><strong>Honest numbers.</strong> Community estimates are labeled [VERIFY] on the <a href="/methodology/">methodology page</a>.</li>
+    </ul>
+  </section>
+
+  <section class="prose" aria-labelledby="learn-h">
+    <h2 id="learn-h">Learn the math</h2>
+    <div class="cards">
+      {GUIDES.map((g) => (
+        <a class="card" href={g.href}>
+          <span class="ico">{g.ico}</span>
+          <h3>{g.name}</h3>
+          <p>{g.desc}</p>
+          <span class="tag">Guide</span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

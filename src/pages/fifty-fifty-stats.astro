@@ -1,0 +1,115 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site';
+
+const title = '50/50 Stats – Your Wish Luck, Quantified';
+const description =
+  'Free HoYo 50/50 statistics: read from your browser-only wish tracker to show win rate, average pity per 5★, luck index and guarantee status. Nothing is uploaded.';
+
+const faqs = [
+  {
+    q: 'Why does my 50/50 win rate differ from 55%?',
+    a: 'Small samples are loud: under the standard model the long-run rate-up chance is ~55%, but a 10-5 record is completely normal variance. Trends need 30+ 5★s before they mean anything. [VERIFY model]',
+  },
+  {
+    q: 'What is the luck index?',
+    a: 'Average pity per 5★ versus the model expectation (~62 pulls on character banners). Lower is luckier — the index is your average expressed as a percentage of expected.',
+  },
+  {
+    q: 'Where does the data come from?',
+    a: 'From the <a href="/wish-tracker/">wish tracker</a> on this site, stored in your browser only. No history file upload, no account — and therefore nothing to sync between devices.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools', href: '/tools/' }, { name: '50/50 Stats' }]} schema={[faqLd]}>
+  <div class="page-head">
+    <h1>50/50 Stats</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Feelings lie; records don't. Your 50/50 win rate, average pity and luck index — computed from the
+      tracker's log, processed entirely in your browser.
+    </p>
+    <div class="microline"><span>Reads local tracker data</span><span>Nothing uploaded</span><span>Free forever</span></div>
+  </div>
+
+  <div class="panel accent">
+    <p style="margin:0">This page reads the log from the <a href="/wish-tracker/">wish tracker</a>. No entries yet? Log a few pulls there first — stats appear here instantly.</p>
+  </div>
+
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <pre class="formula">win rate   = 50/50 wins ÷ (wins + losses)
+luck index = avg pity per 5★ ÷ model expected (~62) × 100   [VERIFY]</pre>
+    <p>The model expectation for average pity comes from the same community model as the <a href="/pity-calculator/">pity calculator</a>. Assumptions and sources: <a href="/methodology/">methodology</a>.</p>
+
+    <h2>FAQ</h2>
+    {faqs.map((f) => (
+      <details><summary>{f.q}</summary><p>{f.a}</p></details>
+    ))}
+  </section>
+
+  <section class="prose">
+    <h2>Related tools and guides</h2>
+    <div class="cards">
+      <a class="card" href="/wish-tracker/"><span class="ico">📓</span><h3>Wish Tracker</h3><p>The log this page reads — device-only storage.</p><span class="tag">Tracker</span></a>
+      <a class="card" href="/pity-calculator/"><span class="ico">🌟</span><h3>Pity Calculator</h3><p>Current pity in, odds out.</p><span class="tag">Flagship</span></a>
+      <a class="card" href="/guides/how-pity-works/"><span class="ico">📘</span><h3>How pity works</h3><p>Why ~55% is the long-run number.</p><span class="tag">Guide</span></a>
+    </div>
+  </section>
+
+  <div class="trust">
+    <strong>Maintained by {SITE.brand}</strong> · Data stays in your browser — <a href="/privacy/">privacy</a> ·
+    Found an error? <a href="/contact/">Report it</a>.
+  </div>
+</Base>
+
+<script>
+  const KEY = 'hoyowish-tracker-v1';
+  const fmt = (n: number, d = 0) => (Number.isFinite(n) ? new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n) : '—');
+  function load(): { n: number; star: string; t: number }[] { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } }
+
+  function render() {
+    const entries = load();
+    const el = document.getElementById('result')!;
+    let wins = 0, losses = 0, fives = 0, pityAtFive = 0, since = 0;
+    for (const e of entries) {
+      since += e.n;
+      if (e.star === 'win' || e.star === 'lose') {
+        fives++; pityAtFive += since; since = 0;
+        if (e.star === 'win') wins++; else losses++;
+      }
+    }
+    if (fives === 0) {
+      el.innerHTML = `<p class="note">No 5★ entries in the tracker yet. Log pulls on the <a href="/wish-tracker/">wish tracker</a> — mark the 5★ batches — and your record appears here.</p>`;
+      return;
+    }
+    const winRate = wins + losses > 0 ? wins / (wins + losses) : NaN;
+    const avgPity = pityAtFive / fives;
+    const luck = (avgPity / 62) * 100;
+    const luckLabel = luck < 90 ? '🌙 Blessed by RNG' : luck <= 110 ? '😐 Painfully average' : '🔥 RNG hates you';
+    el.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span class="k">50/50 record</span><span class="v">${fmt(wins)}W–${fmt(losses)}L</span></div>
+        <div class="stat"><span class="k">Win rate</span><span class="v cyan">${fmt(winRate * 100, 0)}%</span></div>
+        <div class="stat"><span class="k">Avg pity per 5★</span><span class="v gold">${fmt(avgPity, 1)}</span></div>
+        <div class="stat"><span class="k">5★s logged</span><span class="v">${fmt(fives)}</span></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Luck index (lower = luckier)</span><b>${fmt(luck, 0)} — ${luckLabel}</b></div>
+        <div class="row"><span>Long-run model expectation</span><b>~55% win rate · ~62 avg pity [VERIFY]</b></div>
+      </div>
+      <p class="note">${fives < 30 ? 'Sample size is small — variance dominates until ~30 5★s.' : 'Solid sample size — the trend is meaningful.'} <a href="/methodology/">Methodology</a>.</p>`;
+    (window as any).render = render;
+  }
+  (window as any).render = render;
+  render();
+</script>

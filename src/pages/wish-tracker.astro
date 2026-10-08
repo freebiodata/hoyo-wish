@@ -1,0 +1,155 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site';
+
+const title = 'Wish Tracker – Log Pulls in Your Browser (No Upload)';
+const description =
+  'Free HoYo wish tracker that never leaves your device: log singles and ten-pulls, watch your pity counter and 50/50 record update live. Genshin, Star Rail, ZZZ.';
+
+const faqs = [
+  {
+    q: 'Where is my data stored?',
+    a: 'In your browser\'s localStorage, on this device, under this site. There is no account and no server — which means no leak is possible, and clearing your browser data for this site erases the log. Note it does not sync across devices.',
+  },
+  {
+    q: 'How is this different from importing my wish history?',
+    a: 'Import tools read the game\'s history file all at once; this tracker is manual and forward-looking — you log pulls as you make them, and the pity counter stays live between sessions. Many players use both: import the past, track the future.',
+  },
+  {
+    q: 'What happens when I get a 5★?',
+    a: 'Log the pull batch that contained it; when the batch includes a 5★, mark whether it was the rate-up. The tracker resets pity, updates your 50/50 record, and feeds your <a href="/fifty-fifty-stats/">50/50 stats</a> automatically.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools', href: '/tools/' }, { name: 'Wish Tracker' }]} schema={[faqLd]}>
+  <div class="page-head">
+    <h1>Wish Tracker</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      A pull log that lives in your browser — no account, no upload, no sync to lose. Track pity, ten-pulls and
+      every 50/50 heartbreak with one tap after each session.
+    </p>
+    <div class="microline"><span>Private by architecture</span><span>localStorage only</span><span>Works offline</span></div>
+  </div>
+
+  <form class="tool panel accent" id="trk" autocomplete="off" onsubmit="return false">
+    <div class="fields">
+      <label class="field"><span>Add pulls</span>
+        <select id="batch"><option value="10">Ten-pull</option><option value="1">Single</option></select>
+      </label>
+      <label class="field"><span>Did a 5★ appear?</span>
+        <select id="star"><option value="0" selected>No</option><option value="win">Yes — rate-up!</option><option value="lose">Yes — lost 50/50</option></select>
+      </label>
+      <label class="field"><span>Game</span>
+        <select id="game"><option>ZZZ</option><option>Genshin</option><option>Star Rail</option></select>
+      </label>
+    </div>
+    <button class="btn" type="button" onclick="logPulls()">Log it</button>
+    <button class="btn btn-ghost" type="button" onclick="undoPulls()">Undo last</button>
+    <button class="btn btn-danger" type="button" onclick="wipeAll()">Erase all data</button>
+  </form>
+
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <p>Each entry stores the pull count, the 5★ result and a timestamp — nothing else. Pity is the count since your last 5★; the tracker assumes the standard 90-pull character model [VERIFY]. Your <a href="/fifty-fifty-stats/">50/50 stats</a> page reads the same data, so logging here is the only bookkeeping you'll ever do.</p>
+
+    <h2>FAQ</h2>
+    {faqs.map((f) => (
+      <details><summary>{f.q}</summary><p>{f.a}</p></details>
+    ))}
+  </section>
+
+  <section class="prose">
+    <h2>Related tools and guides</h2>
+    <div class="cards">
+      <a class="card" href="/fifty-fifty-stats/"><span class="ico">🪞</span><h3>50/50 Stats</h3><p>Your luck, quantified from this log.</p><span class="tag">Stats</span></a>
+      <a class="card" href="/pity-calculator/"><span class="ico">🌟</span><h3>Pity Calculator</h3><p>Turn the current counter into odds.</p><span class="tag">Flagship</span></a>
+      <a class="card" href="/guides/how-to-track-wishes/"><span class="ico">📗</span><h3>How to track wishes</h3><p>Manual vs import, and why both exist.</p><span class="tag">Guide</span></a>
+    </div>
+  </section>
+
+  <div class="trust">
+    <strong>Maintained by {SITE.brand}</strong> · Data stays in your browser — see <a href="/privacy/">privacy</a> ·
+    Found an error? <a href="/contact/">Report it</a>.
+  </div>
+</Base>
+
+<script>
+  const KEY = 'hoyowish-tracker-v1';
+  const $ = (id: string) => document.getElementById(id) as HTMLSelectElement;
+  const fmt = (n: number, d = 0) => (Number.isFinite(n) ? new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n) : '—');
+
+  interface Entry { n: number; star: string; game: string; t: number }
+  function load(): Entry[] { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } }
+  function save(e: Entry[]) { localStorage.setItem(KEY, JSON.stringify(e)); }
+
+  function render() {
+    const entries = load();
+    let pity = 0, fives = 0, wins = 0, losses = 0, pulls = 0, sinceLast = 0, lastGame = '—';
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      pulls += e.n;
+      lastGame = e.game;
+      if (e.star === 'win' || e.star === 'lose') {
+        fives++; if (e.star === 'win') wins++; else losses++;
+        sinceLast = 0;
+      } else sinceLast += e.n;
+    }
+    pity = sinceLast;
+    const el = document.getElementById('result')!;
+    if (entries.length === 0) {
+      el.innerHTML = `<p class="note">No entries yet — log your next ten-pull above. Data stays on this device (see <a href="/privacy/">privacy</a>).</p>`;
+      return;
+    }
+    const el2 = el;
+    el2.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span class="k">Current pity</span><span class="v">${fmt(pity)} / 90</span></div>
+        <div class="stat"><span class="k">Total pulls logged</span><span class="v cyan">${fmt(pulls)}</span></div>
+        <div class="stat"><span class="k">5★s</span><span class="v gold">${fmt(fives)}</span></div>
+        <div class="stat"><span class="k">50/50 record</span><span class="v">${fmt(wins)}W–${fmt(losses)}L</span></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Last entry</span><b>${entries[entries.length - 1].game} · ${new Date(entries[entries.length - 1].t).toLocaleDateString()}</b></div>
+        <div class="row"><span>Entries stored</span><b>${entries.length} (device only)</b></div>
+      </div>
+      <p class="note">View long-term trends on the <a href="/fifty-fifty-stats/">50/50 stats page</a>.</p>`;
+    (window as any).render = render;
+  }
+
+  function logPulls() {
+    const n = parseInt($('batch').value, 10);
+    const star = $('star').value;
+    const game = $('game').value;
+    const entries = load();
+    entries.push({ n, star, game, t: Date.now() });
+    save(entries);
+    if (star !== '0') ($('star') as HTMLSelectElement).value = '0';
+    render();
+  }
+  function undoPulls() {
+    const entries = load();
+    entries.pop();
+    save(entries);
+    render();
+  }
+  function wipeAll() {
+    if (confirm('Erase every logged pull on this device? This cannot be undone.')) {
+      localStorage.removeItem(KEY);
+      render();
+    }
+  }
+  (window as any).logPulls = logPulls;
+  (window as any).undoPulls = undoPulls;
+  (window as any).wipeAll = wipeAll;
+  render();
+</script>

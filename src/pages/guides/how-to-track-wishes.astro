@@ -1,0 +1,68 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../data/site';
+
+const title = 'How to Track Wishes – Methods for Every HoYo Game';
+const description =
+  'How to track wishes in Genshin, Star Rail and ZZZ: manual logging, history-file imports, and how to combine both — plus what each method can and cannot tell you.';
+const updated = SITE.lastVerified;
+---
+
+<Base
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Guides' }, { name: 'How to Track Wishes' }]}
+  schema={[{
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'How to track wishes in HoYo games',
+    datePublished: '2026-10-08',
+    dateModified: updated,
+    author: { '@type': 'Organization', name: SITE.brand },
+  }]}
+>
+  <div class="page-head">
+    <h1>How to track wishes</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Every tracking method is a trade between effort, privacy and history depth. Here's the honest map —
+      including where the browser-only <a href="/wish-tracker/">wish tracker</a> fits.
+    </p>
+    <div class="microline"><span>By {SITE.brand}</span><span>Updated {updated}</span></div>
+  </div>
+
+  <section class="prose">
+    <h2>Quick answer</h2>
+    <p>
+      For most players: import the past once (via the game's public wish-history page and a tool you trust),
+      then log the future manually in a private tracker. You get full history plus a live pity counter that
+      never touches a server.
+    </p>
+
+    <h2>The three methods</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Method</th><th>History depth</th><th>Privacy</th><th>Effort</th></tr></thead>
+        <tbody>
+          <tr><td><a href="/wish-tracker/">Manual tracker (browser-only)</a></td><td>Forward only</td><td>Max — data never leaves the device</td><td>One tap per session</td></tr>
+          <tr><td>History-file import tools</td><td>~6 months (game's retention window)</td><td>Depends on the tool's server</td><td>One-time + after each patch</td></tr>
+          <tr><td>Spreadsheet discipline</td><td>As far as you keep it</td><td>Total</td><td>High</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>What the in-game history can and cannot tell you</h2>
+    <ul>
+      <li><strong>Can:</strong> every pull with timestamps and rarity — enough to reconstruct pity and 50/50 records.</li>
+      <li><strong>Cannot:</strong> anything older than the retention window (~6 months) [VERIFY per game], or a lifetime luck profile — that only accumulates in your own log.</li>
+    </ul>
+
+    <h2>Setting up the hybrid workflow</h2>
+    <ol class="steps">
+      <li>Import your history with a reputable tool to backfill the last six months.</li>
+      <li>Enter your <em>current</em> pity and 50/50 state into the <a href="/wish-tracker/">tracker</a> as a baseline entry.</li>
+      <li>Log pulls per session going forward — ten-pulls with the 5★ marked.</li>
+      <li>Check <a href="/fifty-fifty-stats/">50/50 stats</a> monthly; watch trends, not single losses.</li>
+    </ol>
+  </section>
+</Base>

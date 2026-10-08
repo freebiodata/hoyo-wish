@@ -1,0 +1,65 @@
+---
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../data/site';
+
+const title = 'How Pity Works in Genshin, Star Rail & ZZZ';
+const description =
+  'How the HoYo pity system works: base rates, the soft-pity ramp, hard pity, and the 50/50 guarantee — one shared model across Genshin, Star Rail and ZZZ, with numbers.';
+const updated = SITE.lastVerified;
+---
+
+<Base
+  title={title}
+  description={description}
+  crumbs={[{ name: 'Guides' }, { name: 'How Pity Works' }]}
+  schema={[{
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: 'How the HoYo pity system works',
+    datePublished: '2026-10-08',
+    dateModified: updated,
+    author: { '@type': 'Organization', name: SITE.brand },
+  }]}
+>
+  <div class="page-head">
+    <h1>How pity works</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Genshin, Honkai: Star Rail and Zenless Zone Zero run the same pity engine under different names. Here's
+      the whole system — base rate, soft pity, hard pity, and the 50/50 — in one place.
+    </p>
+    <div class="microline"><span>By {SITE.brand}</span><span>Updated {updated}</span></div>
+  </div>
+
+  <section class="prose">
+    <h2>Quick answer</h2>
+    <p>
+      Every pull has a 0.6% base chance at a 5★. Around pull 74 the rate ramps up sharply (community-fitted at
+      roughly +6% per pull), and pull 90 is a guaranteed 5★. Each 5★ has a 50% chance to be the featured
+      rate-up; losing that coin flip guarantees the <strong>next</strong> 5★ is the rate-up. Run your exact
+      pity through the <a href="/pity-calculator/">pity calculator</a> to see it applied.
+    </p>
+    <div class="wishband">The exact soft-pity curve has never been officially published — values here are community-fitted and marked [VERIFY] on the <a href="/methodology/">methodology page</a>.</div>
+
+    <h2>The four layers</h2>
+    <ol class="steps">
+      <li><strong>Base rate (0.6%).</strong> Every pull is independent — ten pulls give only ~5.8% total, which is why "I did ten pulls for the pity" is usually disappointment.</li>
+      <li><strong>Soft pity (~74+).</strong> The per-pull rate climbs every pull past ~74. Most 5★s land between pulls 74 and 84; the ramp is why average pity sits near 62, not 45.</li>
+      <li><strong>Hard pity (90).</strong> The guarantee. Budgeting by hard pity is pessimistic on average and correct for worst cases — which is exactly how a budget should work.</li>
+      <li><strong>The 50/50.</strong> Half the time your 5★ is the rate-up; lose, and the next 5★ is guaranteed. Long-run odds of the rate-up sit near 55% under this model.</li>
+    </ol>
+
+    <h2>What carries over — and what doesn't</h2>
+    <ul>
+      <li><strong>Carries:</strong> pity count and the 50/50 guarantee, across banners of the same type, indefinitely. Switching banners never resets pity.</li>
+      <li><strong>Doesn't carry:</strong> pity between banner types (character vs weapon/light-cone/W-engine), and between games — each account-game combination counts separately. [VERIFY]</li>
+    </ul>
+
+    <h2>Using the model</h2>
+    <ul>
+      <li><a href="/pity-calculator/">Pity Calculator</a> — current pity in, odds and expected pulls out.</li>
+      <li><a href="/wish-tracker/">Wish Tracker</a> — keep the counter honest across banners, in your browser only.</li>
+      <li><a href="/guides/primogem-income/">Primogem income guide</a> — pay for the plan with currency math.</li>
+    </ul>
+  </section>
+</Base>

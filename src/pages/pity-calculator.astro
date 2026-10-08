@@ -1,0 +1,134 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../data/site';
+
+const title = 'Pity Calculator – Genshin, Star Rail & ZZZ Odds';
+const description =
+  'Free HoYo pity calculator: pulls to hard pity, odds in your next ten-pull, expected pulls and the currency a guarantee needs. Presets for Genshin, Star Rail and ZZZ.';
+
+const faqs = [
+  {
+    q: 'Does pity carry over between banners?',
+    a: 'Within the same banner type and game, yes — pity and a carried 50/50 guarantee persist across limited banners. Enter your current pity even mid-banner and the math stays valid. [VERIFY per game]',
+  },
+  {
+    q: 'Why are my odds in a ten-pull only ~6%?',
+    a: 'At the 0.6% base rate, ten independent pulls give 1 − 0.994¹⁰ ≈ 5.8%. The pity system — not the per-pull rate — is what guarantees 5★s, which is why the calculator also shows pulls to hard pity and expected pulls.',
+  },
+  {
+    q: 'What does the guarantee switch change?',
+    a: 'With a carried guarantee (you lost your last 50/50), every 5★ is the rate-up, so banner odds equal 5★ odds. Without it, the tool halves the shown odds for the coin flip and reminds you that a loss guarantees the next one.',
+  },
+];
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+};
+---
+
+<Base title={title} description={description} crumbs={[{ name: 'Tools', href: '/tools/' }, { name: 'Pity Calculator' }]} schema={[faqLd]}>
+  <div class="page-head">
+    <h1>Pity Calculator</h1>
+    <div class="h1-bar"></div>
+    <p class="lede">
+      Your wish plan in numbers: pulls to hard pity, real odds in the next ten-pull, expected pulls needed —
+      and what the 50/50 does to all of it.
+    </p>
+    <div class="microline"><span>Free</span><span>No sign-up</span><span>Runs in your browser</span></div>
+  </div>
+
+  <form class="tool panel accent" id="pity" autocomplete="off" onsubmit="return false">
+    <div class="fields">
+      <label class="field"><span>Game preset</span>
+        <select id="preset">
+          <option value="0.6,90,74,6" selected>Character banner (0.6% · 90 pity)</option>
+          <option value="1.6,80,65,6">Weapon / light cone (1.6% · 80 pity)</option>
+        </select>
+      </label>
+      <label class="field"><span>Current pity</span><input id="pityn" type="number" value="42" min="0" step="1" inputmode="numeric" /></label>
+      <label class="field"><span>50/50 status</span>
+        <select id="guar"><option value="0" selected>50/50 next</option><option value="1">Guaranteed</option></select>
+      </label>
+      <label class="field"><span>Pulls you plan</span><input id="plan" type="number" value="80" min="1" step="1" inputmode="numeric" /></label>
+      <label class="field"><span>Currency you hold</span><input id="cur" type="number" value="12800" min="0" step="160" inputmode="numeric" /><small>Primogems / jade / polychromes</small></label>
+    </div>
+    <button class="btn" type="button" onclick="calcPity()">Plan my wishes</button>
+  </form>
+
+  <div class="result" id="result" aria-live="polite"></div>
+
+  <section class="prose">
+    <h2>How it works</h2>
+    <pre class="formula">rate(n)     = 0.6% + 6% × max(0, n − 74)     capped at 100%  [VERIFY]
+P(within k) = 1 − (1 − r₁)(1 − r₂)…(1 − rₖ)
+expected    = Σ P(still nothing after i−1 pulls)</pre>
+    <p>The shared HoYo model: 0.6% base, soft pity ramping from pull ~74, hard pity 90 (character presets). Currency conversion defaults to 160 per pull [VERIFY per game]. Full assumptions: <a href="/methodology/">methodology</a>.</p>
+
+    <h2>FAQ</h2>
+    {faqs.map((f) => (
+      <details><summary>{f.q}</summary><p>{f.a}</p></details>
+    ))}
+  </section>
+
+  <section class="prose">
+    <h2>Related tools and guides</h2>
+    <div class="cards">
+      <a class="card" href="/primogem-planner/"><span class="ico">🪙</span><h3>Primogem Planner</h3><p>Can your income cover the deficit in time?</p><span class="tag">Calculator</span></a>
+      <a class="card" href="/wish-tracker/"><span class="ico">📓</span><h3>Wish Tracker</h3><p>Stop guessing your pity — log it.</p><span class="tag">Tracker</span></a>
+      <a class="card" href="/guides/how-pity-works/"><span class="ico">📘</span><h3>How pity works</h3><p>Soft pity, hard pity, and the 50/50 guarantee.</p><span class="tag">Guide</span></a>
+    </div>
+  </section>
+
+  <div class="trust">
+    <strong>Maintained by {SITE.brand}</strong> · Free, no-ads, no-account · Pity model: <a href="/methodology/">Methodology</a> ·
+    Found an error? <a href="/contact/">Report it</a>.
+  </div>
+</Base>
+
+<script>
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement | HTMLSelectElement;
+  const numv = (id: string, fb = 0) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : fb; };
+  const fmt = (n: number, d = 1) => (Number.isFinite(n) ? new Intl.NumberFormat('en-US', { maximumFractionDigits: d }).format(n) : '—');
+  const pcf = (f: number) => (Number.isFinite(f) ? (f * 100).toFixed(1) + '%' : '—');
+
+  function calcPity() {
+    const [baseS, hardS, softS, boostS] = ($('preset') as HTMLSelectElement).value.split(',');
+    const base = parseFloat(baseS) / 100, hard = parseInt(hardS), soft = parseInt(softS), boost = parseFloat(boostS) / 100;
+    const pity = Math.max(0, Math.floor(numv('pityn')));
+    const guar = ($('guar') as HTMLSelectElement).value === '1';
+    const plan = Math.max(1, Math.floor(numv('plan', 10)));
+    const cur = numv('cur');
+    const m = Math.max(1, hard - pity);
+    const rateAt = (n: number) => Math.min(1, base + boost * Math.max(0, n - soft));
+    let survive = 1, exp = 0, within = 0, withinPulls = 0;
+    for (let i = 1; i <= m; i++) {
+      const r = i === m ? 1 : rateAt(pity + i);
+      exp += survive;
+      if (i <= plan) { within += survive * r; withinPulls = i; }
+      survive *= (1 - r);
+    }
+    const bannerOdds = guar ? within : within * 0.5;
+    const pullsFromCurrency = Math.floor(cur / 160);
+    const deficit = Math.max(0, exp * 160 - cur);
+    const el = document.getElementById('result')!;
+    el.innerHTML = `
+      <div class="stats">
+        <div class="stat"><span class="k">Pulls to hard pity</span><span class="v">${fmt(hard - pity, 0)}</span></div>
+        <div class="stat"><span class="k">Odds in next ${fmt(plan, 0)}</span><span class="v cyan">${pcf(bannerOdds)}</span></div>
+        <div class="stat"><span class="k">Expected pulls</span><span class="v gold">${fmt(exp, 1)}</span></div>
+      </div>
+      <div class="rows">
+        <div class="row"><span>Pity</span><b>${pity} / ${hard}</b></div>
+        <div class="row"><span>Currency covers</span><b>${fmt(pullsFromCurrency)} pulls (${fmt(cur)} held)</b></div>
+        <div class="row"><span>Deficit to expected cost</span><b>${deficit > 0 ? fmt(deficit) + ' currency' : 'covered ✓'}</b></div>
+        <div class="row"><span>Status</span><b>${guar ? 'Guaranteed rate-up' : '50/50 — a loss guarantees the next'}</b></div>
+      </div>
+      <p class="note">Shared HoYo model [VERIFY]: 0.6% base, soft pity ~74 (+6%/pull), hard 90. Banner odds halved for the 50/50. <a href="/methodology/">Methodology</a>.</p>`;
+    (window as any).calcPity = calcPity;
+  }
+  (window as any).calcPity = calcPity;
+  document.getElementById('pity')?.addEventListener('input', calcPity);
+  calcPity();
+</script>
